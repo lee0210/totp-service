@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/publish/
+**/.terraform/
+**/.terraform_build/
+**/*.sln
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/backend.tf
+
+.DS_Store

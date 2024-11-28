@@ -1,0 +1,22 @@
+services:
+  dynamodb-local:
+    image: "amazon/dynamodb-local:latest"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    user: root
+    working_dir: /home/dynamodblocal
+    networks:
+      - totp-test
+    ports:
+      - "8002:8000"
+  dotnet-dev:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    command: "tail -f /dev/null"
+    networks:
+      - totp-test
+    volumes:
+      - .:/app
+    working_dir: /app/totp-service
+
+networks:
+  totp-test:
+    driver: bridge
