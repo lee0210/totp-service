@@ -45,7 +45,7 @@ public class FunctioUnitTest
             AppName = "test",
             UserId = "userId"
         };
-        FunctionOutput result = await function.FunctionHandler(input, context);
+        CreateResult result = await function.FunctionHandler(input, context);
         
         _output.WriteLine($"Result: {result.TOTPString}");
 
@@ -54,7 +54,7 @@ public class FunctioUnitTest
         
         Assert.Equal(StatusCodes.OK, result.StatusCode);
 
-        return query["secret"];
+        return query["secret"] ?? "";
     }
 
     private async Task TestHappyFlow_Verify(string totpSecret)
@@ -86,10 +86,10 @@ public class FunctioUnitTest
             UserId = "userId",
             OTP = otp
         };
-        FunctionOutput result = await function.FunctionHandler(input, context);
+        VerifyResult result = await function.FunctionHandler(input, context);
         
         Assert.Equal(StatusCodes.OK, result.StatusCode);
-        Assert.Equal(true, result.IsValid);
+        Assert.True(result.IsValid);
 
     }
 

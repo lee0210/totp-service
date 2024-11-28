@@ -30,11 +30,19 @@ public class FunctionInput
 
 }
 
-public class FunctionOutput
-{
+public class FunctionOutput { 
     public required StatusCodes StatusCode { get; set; }
-    public string? TOTPString { get; set; }
-    public bool? IsValid { get; set; }
+}
+
+public class CreateResult: FunctionOutput
+{    
+    public required string TOTPString { get; set; }
+
+}
+
+public class VerifyResult: FunctionOutput
+{
+    public required bool IsValid { get; set; }
 }
 
 public class Function
@@ -56,7 +64,7 @@ public class Function
         _dbContext = dbContext;
     }
 
-    public async Task<FunctionOutput> FunctionHandler(FunctionInput input, ILambdaContext context)
+    public async Task<dynamic> FunctionHandler(FunctionInput input, ILambdaContext context)
     {
         if (!isValidInput(input))
         {
@@ -103,10 +111,10 @@ public class Function
 
             await _dbContext.SaveAsync(totp);
 
-            return new FunctionOutput
+            return new CreateResult
             {
                 StatusCode = StatusCodes.OK,
-                TOTPString = $"otpauth://totp/{totp.AppName}:{totp.UserId}?secret={totp.Secret}&issuer={totp.AppName}"
+                    TOTPString = $"otpauth://totp/{totp.AppName}:{totp.UserId}?secret={totp.Secret}&issuer={totp.AppName}" 
             };
         }
         catch (Exception e)
@@ -127,13 +135,13 @@ public class Function
             var totp = new Totp(Base32Encoding.ToBytes(totpE.Secret));
             if (totp.VerifyTotp(input.OTP, out _))
             {
-                return new FunctionOutput
+                return new VerifyResult
                 {
                     StatusCode = StatusCodes.OK,
                     IsValid = true
                 };
             }
-            return new FunctionOutput
+            return new VerifyResult
             {
                 StatusCode = StatusCodes.OK,
                 IsValid = false
