@@ -13,6 +13,12 @@ build: clean
 	@docker run --rm -v $(APP_SRC):/app -w /app $(DOTNET_IMAGE) dotnet publish -c Release -r linux-x64 -o publish
 	@cd $(APP_SRC)/publish && zip -q -r $(BUILD_DIR)/LambdaDeployment.zip .
 
+.PHONY: deploy
 deploy: 
 	@cd $(TERRAFORM_DIR) && terraform init && terraform apply --auto-approve
+
+.PHONY: test
+test:
+	@docker compose up -d
+	@docker compose exec dotnet-dev dotnet test totpFunction/test/totpFunction.Tests
     
