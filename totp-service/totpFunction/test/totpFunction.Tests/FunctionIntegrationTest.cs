@@ -4,6 +4,7 @@ using Amazon.Lambda.TestUtilities;
 using System.Web;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.Model;
 using OtpNet;
 
 namespace TOTPFunction.Tests;
@@ -18,11 +19,47 @@ public class FunctioIntegrationTest
     {
         _output = output;
 
-        _localDynamoDBContext = new DynamoDBContext(
-            new AmazonDynamoDBClient(
-                new Amazon.Runtime.BasicAWSCredentials("accesskey", "secretkey"),
-                new AmazonDynamoDBConfig { ServiceURL = "http://dynamodb-local:8000" })
+        var amazonDynamoDBClient = new AmazonDynamoDBClient(
+            new Amazon.Runtime.BasicAWSCredentials("accesskey", "secretkey"),
+            new AmazonDynamoDBConfig { ServiceURL = "http://dynamodb-local:8000" }
         );
+
+        InitializeDynamoDB(amazonDynamoDBClient).Wait();
+
+        _localDynamoDBContext = new DynamoDBContext(amazonDynamoDBClient);
+    }
+
+    private async Task InitializeDynamoDB(IAmazonDynamoDB amazonDynamoDB)
+    {
+        var tableName = "Totps";
+        var request = new CreateTableRequest
+        {
+            TableName = tableName,
+            KeySchema = new List<KeySchemaElement>
+            {
+                new KeySchemaElement
+                {
+                    AttributeName = "Id", 
+                    KeyType = "HASH"     
+                }
+            },
+            AttributeDefinitions = new List<AttributeDefinition>
+            {
+                new AttributeDefinition
+                {
+                    AttributeName = "Id",
+                    AttributeType = "S"
+                }
+            },
+            BillingMode = BillingMode.PAY_PER_REQUEST
+        };
+        try
+        {
+            await amazonDynamoDB.DeleteTableAsync(tableName);
+        } catch (ResourceNotFoundException) {
+            _output.WriteLine($"Table ${tableName} not found. Skipping deletion");
+        }
+        await amazonDynamoDB.CreateTableAsync(request);   
     }
 
     [Fact]
