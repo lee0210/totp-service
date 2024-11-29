@@ -55,8 +55,13 @@ resource "aws_dynamodb_table" "totps_table" {
     max_write_request_units = 5
   }
   hash_key = "Id"
+  range_key = "Device"
   attribute {
     name = "Id"
+    type = "S"
+  }
+  attribute {
+    name = "Device"
     type = "S"
   }
 }
