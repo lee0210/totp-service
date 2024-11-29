@@ -12,6 +12,7 @@ build: clean
 	@mkdir -p $(BUILD_DIR)
 	@docker run --rm -v $(APP_SRC):/app -w /app $(DOTNET_IMAGE) dotnet publish -c Release -r linux-x64 -o publish
 	@cd $(APP_SRC)/publish && zip -q -r $(BUILD_DIR)/LambdaDeployment.zip .
+	@find $(APP_SRC) -type f ! -path "*/bin/*" ! -path "*/obj/*" ! -path "*/publish/*" -exec sha256sum {} \; | sha256sum > $(BUILD_DIR)/source.sha256sum
 
 .PHONY: deploy
 deploy: 

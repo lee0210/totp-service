@@ -7,6 +7,10 @@ provider "aws" {
   }
 }
 
+data "local_file" "source_hash" {
+  filename = "${path.module}/../.terraform_build/source.sha256sum"
+}
+
 data "aws_iam_policy_document" "lambda_assume_role_policy" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -30,6 +34,7 @@ resource "aws_lambda_function" "totp_function" {
   filename      = "${path.module}/../.terraform_build/LambdaDeployment.zip"
   role          = aws_iam_role.function_role.arn
   memory_size   = 1024
+  source_code_hash = data.local_file.source_hash.content
   environment {
     variables = {
       TABLE_PREFIX = "${var.stack_name}-"
