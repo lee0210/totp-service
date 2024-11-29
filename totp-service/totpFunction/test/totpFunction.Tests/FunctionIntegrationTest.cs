@@ -29,28 +29,38 @@ public class FunctioIntegrationTest
         _localDynamoDBContext = new DynamoDBContext(amazonDynamoDBClient);
     }
 
-    private async Task InitializeDynamoDB(IAmazonDynamoDB amazonDynamoDB)
+    private async Task InitializeDynamoDB(AmazonDynamoDBClient amazonDynamoDB)
     {
         var tableName = "Totps";
         var request = new CreateTableRequest
         {
             TableName = tableName,
-            KeySchema = new List<KeySchemaElement>
-            {
+            KeySchema =
+            [
                 new KeySchemaElement
                 {
                     AttributeName = "Id", 
                     KeyType = "HASH"     
+                },
+                new KeySchemaElement
+                {
+                    AttributeName = "Device",
+                    KeyType = "RANGE"
                 }
-            },
-            AttributeDefinitions = new List<AttributeDefinition>
-            {
+            ],
+            AttributeDefinitions =
+            [
                 new AttributeDefinition
                 {
                     AttributeName = "Id",
                     AttributeType = "S"
+                },
+                new AttributeDefinition
+                {
+                    AttributeName = "Device",
+                    AttributeType = "S"
                 }
-            },
+            ],
             BillingMode = BillingMode.PAY_PER_REQUEST
         };
         try
@@ -66,6 +76,7 @@ public class FunctioIntegrationTest
     public async Task TestHappyFlow()
     {
         var totpSecret = await TestHappyFlow_Create();
+        await TestHappFlow_List();
         await TestHappyFlow_Verify(totpSecret);
         await TestHappyFlow_Delete();
         
@@ -80,6 +91,7 @@ public class FunctioIntegrationTest
         {
             Action = "create",
             AppName = "test",
+            Device = "device",
             UserId = "userId"
         };
         CreateResult result = await function.FunctionHandler(input, context);
@@ -92,6 +104,24 @@ public class FunctioIntegrationTest
         Assert.Equal(StatusCodes.OK, result.StatusCode);
 
         return query["secret"] ?? "";
+    }
+
+    private async Task TestHappFlow_List()
+    {
+        var function = new Function(_localDynamoDBContext);
+        var context = new TestLambdaContext();
+        var input = new FunctionInput
+        {
+            Action = "list",
+            AppName = "test",
+            UserId = "userId"
+        };
+        dynamic result = await function.FunctionHandler(input, context);
+
+        Assert.IsType<ListResult>(result);
+        Assert.Equal(StatusCodes.OK, result.StatusCode);
+        Assert.Single(result.Totps);
+        Assert.Equal("device", result.Totps[0].Device);
     }
 
     private async Task TestHappyFlow_Verify(string totpSecret)
@@ -123,11 +153,11 @@ public class FunctioIntegrationTest
         {
             Action = "delete",
             AppName = "test",
+            Device = "device",
             UserId = "userId"
         };
         FunctionOutput result = await function.FunctionHandler(input, context);
 
         Assert.Equal(StatusCodes.OK, result.StatusCode);
     }
-
 }
